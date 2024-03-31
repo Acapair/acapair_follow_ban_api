@@ -1,5 +1,5 @@
-pub mod routing;
 pub mod db;
+pub mod routing;
 
 #[derive(Debug, Clone)]
 pub struct AppState {}
