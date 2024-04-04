@@ -1,11 +1,18 @@
 use surrealdb::{engine::remote::ws::Client, Surreal};
 
-use crate::Channel;
+use crate::{Channel, DataBaseConfig};
 
 use super::db_utils::*;
 
-pub async fn connect() -> Option<Surreal<Client>> {
-    establish_connection().await
+pub async fn connect(database_config: &DataBaseConfig) -> Option<Surreal<Client>> {
+    establish_connection(
+        &database_config.address,
+        &database_config.username,
+        &database_config.password,
+        &database_config.namespace,
+        &database_config.database,
+    )
+    .await
 }
 
 pub async fn create(username: &String, db: &Surreal<Client>) -> Option<Channel> {
@@ -15,13 +22,15 @@ pub async fn create(username: &String, db: &Surreal<Client>) -> Option<Channel> 
     }
 }
 
-pub async fn search(username: &String, db: &Surreal<Client>) -> Option<Channel> {
+pub async fn search_username(username: &String, db: &Surreal<Client>) -> Option<Channel> {
     search_channel_by_username(username, db).await
 }
 
+pub async fn search_id(id: &String, db: &Surreal<Client>) -> Option<Channel> {
+    search_channel_by_id(&id.into(), db).await
+}
+
 pub async fn delete(username: &String, db: &Surreal<Client>) -> Option<Channel> {
-    // delete channel should be last for mind sake
-    // first artifacts
     match search_channel_by_username(username, db).await {
         Some(channel) => match remove_all_followers(channel.clone(), db).await {
             Some(_) => match remove_all_followed(channel.clone(), db).await {
@@ -41,18 +50,6 @@ pub async fn delete(username: &String, db: &Surreal<Client>) -> Option<Channel> 
             None
         }
     }
-    // match delete_channel(username, db).await {
-    //     Some(deleted_channel) => {
-    //         match remove_follower_artifacts(deleted_channel.clone(), db).await {
-    //             Some(_) => match remove_banned_artifacts(deleted_channel.clone(), db).await {
-    //                 Some(_) => Some(deleted_channel),
-    //                 None => None,
-    //             },
-    //             None => None,
-    //         }
-    //     }
-    //     None => None,
-    // }
 }
 
 pub async fn change_username(

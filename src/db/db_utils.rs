@@ -7,29 +7,27 @@ use surrealdb::{
 };
 
 use super::db_operations::{unban, unfollow};
-pub async fn establish_connection() -> Option<Surreal<Client>> {
-    match Surreal::new::<Ws>("127.0.0.1:8000").await {
-        Ok(db) => {
-            match db
-                .signin(Root {
-                    username: "root",
-                    password: "root",
-                })
-                .await
-            {
-                Ok(_) => match db.use_ns("test").use_db("test").await {
-                    Ok(_) => Some(db),
-                    Err(err_val) => {
-                        eprintln!("Error: DB Use | {}", err_val);
-                        None
-                    }
-                },
+pub async fn establish_connection(
+    address: &String,
+    username: &String,
+    password: &String,
+    namespace: &String,
+    database: &String,
+) -> Option<Surreal<Client>> {
+    match Surreal::new::<Ws>(address).await {
+        Ok(db) => match db.signin(Root { username, password }).await {
+            Ok(_) => match db.use_ns(namespace).use_db(database).await {
+                Ok(_) => Some(db),
                 Err(err_val) => {
-                    eprintln!("Error: DB Login | {}", err_val);
+                    eprintln!("Error: DB Use | {}", err_val);
                     None
                 }
+            },
+            Err(err_val) => {
+                eprintln!("Error: DB Login | {}", err_val);
+                None
             }
-        }
+        },
         Err(err_val) => {
             eprintln!("Error: DB Connection | {}", err_val);
             None
@@ -37,7 +35,7 @@ pub async fn establish_connection() -> Option<Surreal<Client>> {
     }
 }
 
-async fn search_channel_by_id(id: &Id, db: &Surreal<Client>) -> Option<Channel> {
+pub async fn search_channel_by_id(id: &Id, db: &Surreal<Client>) -> Option<Channel> {
     let searced: Option<Channel> = db.select(("channel", id.clone())).await.unwrap();
     searced
 }

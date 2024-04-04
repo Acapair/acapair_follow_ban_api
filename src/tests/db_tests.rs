@@ -22,7 +22,14 @@ async fn create_connection_for_tests(
 
 #[test]
 async fn test_connect() {
-    assert_eq!(connect().await.is_some(), true);
+    assert_eq!(
+        create_connection_for_tests("test_connect")
+            .await
+            .health()
+            .await
+            .is_ok(),
+        true
+    );
 }
 #[test]
 async fn test_create() {
@@ -37,12 +44,26 @@ async fn test_create() {
 }
 
 #[test]
-async fn test_search() {
-    let connection = create_connection_for_tests("test_search").await;
+async fn test_search_username() {
+    let connection = create_connection_for_tests("test_search_username").await;
     let name = &"Ahmet".to_string();
 
     let created = create(name, &connection).await;
-    let searched = search(name, &connection).await;
+    let searched = search_username(name, &connection).await;
+
+    assert_eq!(created, searched);
+
+    let _cleaning = connection.query("DELETE channel;").await;
+}
+
+#[test]
+async fn test_search_id() {
+    let connection = create_connection_for_tests("test_search_username").await;
+    let name = &"Ahmet".to_string();
+
+    let created = create(name, &connection).await;
+    let id = &created.clone().unwrap().id.unwrap().id.to_string();
+    let searched = search_id(id, &connection).await;
 
     assert_eq!(created, searched);
 
@@ -58,7 +79,7 @@ async fn test_delete() {
     let deleted = delete(name, &connection).await;
 
     assert_eq!(created, deleted);
-    assert_eq!(search(name, &connection).await.is_none(), true);
+    assert_eq!(search_username(name, &connection).await.is_none(), true);
 
     let _cleaning = connection.query("DELETE channel;").await;
 }
@@ -91,7 +112,7 @@ async fn test_follow() {
     let mut follower = follow(name_follower, name_followed, &connection)
         .await
         .unwrap();
-    let mut followed = search(name_followed, &connection).await.unwrap();
+    let mut followed = search_username(name_followed, &connection).await.unwrap();
 
     assert_eq!(
         followed.follower_list.pop().unwrap(),
@@ -117,7 +138,7 @@ async fn test_unfollow() {
     let mut follower = follow(name_follower, name_followed, &connection)
         .await
         .unwrap();
-    let mut followed = search(name_followed, &connection).await.unwrap();
+    let mut followed = search_username(name_followed, &connection).await.unwrap();
 
     assert_eq!(
         followed.follower_list.pop().unwrap(),
@@ -131,7 +152,7 @@ async fn test_unfollow() {
     follower = unfollow(name_follower, name_followed, &connection)
         .await
         .unwrap();
-    followed = search(name_followed, &connection).await.unwrap();
+    followed = search_username(name_followed, &connection).await.unwrap();
 
     assert_eq!(followed.follower_list.pop().is_none(), true);
     assert_eq!(follower.followed_list.pop().is_none(), true);
@@ -149,7 +170,7 @@ async fn test_ban() {
     let _judge = create(name_judge, &connection).await.unwrap();
 
     let mut victim = ban(name_victim, name_judge, &connection).await.unwrap();
-    let mut judge = search(name_judge, &connection).await.unwrap();
+    let mut judge = search_username(name_judge, &connection).await.unwrap();
 
     assert_eq!(victim.banned_from_list.pop().unwrap(), judge.id.unwrap().id);
     assert_eq!(judge.banned_list.pop().unwrap(), victim.id.unwrap().id);
@@ -167,13 +188,13 @@ async fn test_unban() {
     let _judge = create(name_judge, &connection).await.unwrap();
 
     let mut victim = ban(name_victim, name_judge, &connection).await.unwrap();
-    let mut judge = search(name_judge, &connection).await.unwrap();
+    let mut judge = search_username(name_judge, &connection).await.unwrap();
 
     assert_eq!(victim.banned_from_list.pop().unwrap(), judge.id.unwrap().id);
     assert_eq!(judge.banned_list.pop().unwrap(), victim.id.unwrap().id);
 
     victim = unban(name_victim, name_judge, &connection).await.unwrap();
-    judge = search(name_judge, &connection).await.unwrap();
+    judge = search_username(name_judge, &connection).await.unwrap();
 
     assert_eq!(victim.banned_from_list.pop().is_none(), true);
     assert_eq!(judge.banned_list.pop().is_none(), true);
@@ -193,7 +214,7 @@ async fn test_delete_follower() {
     let mut follower = follow(name_follower, name_followed, &connection)
         .await
         .unwrap();
-    let mut followed = search(name_followed, &connection).await.unwrap();
+    let mut followed = search_username(name_followed, &connection).await.unwrap();
 
     assert_eq!(
         followed.follower_list.pop().unwrap(),
@@ -205,7 +226,7 @@ async fn test_delete_follower() {
     );
 
     follower = delete(name_follower, &connection).await.unwrap();
-    followed = search(name_followed, &connection).await.unwrap();
+    followed = search_username(name_followed, &connection).await.unwrap();
 
     assert_eq!(followed.follower_list.pop().is_none(), true);
     assert_eq!(follower.followed_list.pop().is_none(), true);
@@ -225,7 +246,7 @@ async fn test_delete_followed() {
     let mut follower = follow(name_follower, name_followed, &connection)
         .await
         .unwrap();
-    let mut followed = search(name_followed, &connection).await.unwrap();
+    let mut followed = search_username(name_followed, &connection).await.unwrap();
 
     assert_eq!(
         followed.follower_list.pop().unwrap(),
@@ -237,7 +258,7 @@ async fn test_delete_followed() {
     );
 
     followed = delete(name_followed, &connection).await.unwrap();
-    follower = search(name_follower, &connection).await.unwrap();
+    follower = search_username(name_follower, &connection).await.unwrap();
 
     assert_eq!(followed.follower_list.pop().is_none(), true);
     assert_eq!(follower.followed_list.pop().is_none(), true);
@@ -255,13 +276,13 @@ async fn test_delete_victim() {
     let _judge = create(name_judge, &connection).await.unwrap();
 
     let mut victim = ban(name_victim, name_judge, &connection).await.unwrap();
-    let mut judge = search(name_judge, &connection).await.unwrap();
+    let mut judge = search_username(name_judge, &connection).await.unwrap();
 
     assert_eq!(judge.banned_list.pop().unwrap(), victim.id.unwrap().id);
     assert_eq!(victim.banned_from_list.pop().unwrap(), judge.id.unwrap().id);
 
     victim = delete(name_victim, &connection).await.unwrap();
-    judge = search(name_judge, &connection).await.unwrap();
+    judge = search_username(name_judge, &connection).await.unwrap();
 
     assert_eq!(judge.banned_list.pop().is_none(), true);
     assert_eq!(victim.banned_from_list.pop().is_none(), true);
@@ -279,13 +300,13 @@ async fn test_delete_judge() {
     let _judge = create(name_judge, &connection).await.unwrap();
 
     let mut victim = ban(name_victim, name_judge, &connection).await.unwrap();
-    let mut judge = search(name_judge, &connection).await.unwrap();
+    let mut judge = search_username(name_judge, &connection).await.unwrap();
 
     assert_eq!(judge.banned_list.pop().unwrap(), victim.id.unwrap().id);
     assert_eq!(victim.banned_from_list.pop().unwrap(), judge.id.unwrap().id);
 
     judge = delete(name_judge, &connection).await.unwrap();
-    victim = search(name_victim, &connection).await.unwrap();
+    victim = search_username(name_victim, &connection).await.unwrap();
 
     assert_eq!(judge.banned_list.pop().is_none(), true);
     assert_eq!(victim.banned_from_list.pop().is_none(), true);
@@ -305,7 +326,7 @@ async fn test_follow_already_follower() {
     let mut follower = follow(name_follower, name_followed, &connection)
         .await
         .unwrap();
-    let mut followed = search(name_followed, &connection).await.unwrap();
+    let mut followed = search_username(name_followed, &connection).await.unwrap();
 
     assert_eq!(
         followed.follower_list.pop().unwrap(),
@@ -352,7 +373,7 @@ async fn test_ban_already_banned() {
     let _judge = create(name_judge, &connection).await.unwrap();
 
     let mut victim = ban(name_victim, name_judge, &connection).await.unwrap();
-    let mut judge = search(name_judge, &connection).await.unwrap();
+    let mut judge = search_username(name_judge, &connection).await.unwrap();
 
     assert_eq!(victim.banned_from_list.pop().unwrap(), judge.id.unwrap().id);
     assert_eq!(judge.banned_list.pop().unwrap(), victim.id.unwrap().id);
@@ -405,11 +426,21 @@ async fn test_create_already_created() {
 }
 
 #[test]
-async fn test_search_noncreated() {
-    let connection = create_connection_for_tests("test_search_noncreated").await;
+async fn test_search_username_noncreated() {
+    let connection = create_connection_for_tests("test_search_username_noncreated").await;
     let name = &"Ahmet".to_string();
 
-    assert_eq!(search(name, &connection).await.is_none(), true);
+    assert_eq!(search_username(name, &connection).await.is_none(), true);
+
+    let _cleaning = connection.query("DELETE channel;").await;
+}
+
+#[test]
+async fn test_search_id_noncreated() {
+    let connection = create_connection_for_tests("test_search_id_noncreated").await;
+    let name = &"Ahmet".to_string();
+
+    assert_eq!(search_id(name, &connection).await.is_none(), true);
 
     let _cleaning = connection.query("DELETE channel;").await;
 }
