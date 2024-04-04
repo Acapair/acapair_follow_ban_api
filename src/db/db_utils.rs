@@ -78,6 +78,9 @@ pub async fn create_channel(username: &String, db: &Surreal<Client>) -> Vec<Opti
             return vec![];
         }
         None => {
+            db.query("DEFINE INDEX usernameINDEX ON TABLE channel COLUMNS username UNIQUE")
+                .await
+                .unwrap();
             let created: Vec<Option<Channel>> = db
                 .create("channel")
                 .content(Channel {
