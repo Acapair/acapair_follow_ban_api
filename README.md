@@ -26,4 +26,4 @@ Unban User: "/unban/:victim/:judge"
 
 Is Follower: "/is-follower/:follower/:follower"
 
-Is Followed: "/is-follower/:follower/:follower"
+Is Banned: "/is-banned/:victim/:judge"

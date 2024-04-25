@@ -1,4 +1,3 @@
-
 #[cfg(test)]
 use crate::db::db_operations::*;
 use tokio::test;
@@ -485,39 +484,31 @@ async fn test_is_follower_nonfollower() {
 }
 
 #[test]
-async fn test_is_followed_already_followed() {
-    let connection = create_connection_for_tests("test_is_followed_already_followed").await;
-    let name_follower = &"Ahmet".to_string();
-    let name_followed = &"Kaan".to_string();
+async fn test_is_banned_already_banned() {
+    let connection = create_connection_for_tests("test_is_banned_already_banned").await;
+    let name_victim = &"Ahmet".to_string();
+    let name_judge = &"Kaan".to_string();
 
-    let _follower = create(name_follower, &connection).await.unwrap();
-    let _followed = create(name_followed, &connection).await.unwrap();
+    let _victim = create(name_victim, &connection).await.unwrap();
+    let _judge = create(name_judge, &connection).await.unwrap();
 
-    let _follower = follow(name_follower, name_followed, &connection)
-        .await
-        .unwrap();
+    let _victim = ban(name_victim, name_judge, &connection).await.unwrap();
 
-    assert_eq!(
-        is_followed(name_follower, name_followed, &connection).await,
-        true
-    );
+    assert_eq!(is_banned(name_victim, name_judge, &connection).await, true);
 
     let _cleaning = connection.query("DELETE channel;").await;
 }
 
 #[test]
-async fn test_is_followed_nonfollowed() {
-    let connection = create_connection_for_tests("test_is_follower_nonfollowed").await;
-    let name_follower = &"Ahmet".to_string();
-    let name_followed = &"Kaan".to_string();
+async fn test_is_banned_nonbanned() {
+    let connection = create_connection_for_tests("test_is_banned_nonbanned").await;
+    let name_victim = &"Ahmet".to_string();
+    let name_judge = &"Kaan".to_string();
 
-    let _follower = create(name_follower, &connection).await.unwrap();
-    let _followed = create(name_followed, &connection).await.unwrap();
+    let _victim = create(name_victim, &connection).await.unwrap();
+    let _judge = create(name_judge, &connection).await.unwrap();
 
-    assert_eq!(
-        is_followed(name_follower, name_followed, &connection).await,
-        false
-    );
+    assert_eq!(is_banned(name_victim, name_judge, &connection).await, false);
 
     let _cleaning = connection.query("DELETE channel;").await;
 }

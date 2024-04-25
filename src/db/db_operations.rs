@@ -105,6 +105,6 @@ pub async fn is_follower(follower: &String, followed: &String, db: &Surreal<Clie
     is_follower_by_username(follower, followed, db).await
 }
 
-pub async fn is_followed(follower: &String, followed: &String, db: &Surreal<Client>) -> bool {
-    is_followed_by_username(follower, followed, db).await
+pub async fn is_banned(victim: &String, judge: &String, db: &Surreal<Client>) -> bool {
+    is_banned_by_username(victim, judge, db).await
 }
