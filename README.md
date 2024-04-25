@@ -23,3 +23,7 @@ Unfollow User: "/unfollow/:follower/:followed"
 Ban User: "/ban/:victim/:judge"
 
 Unban User: "/unban/:victim/:judge"
+
+Is Follower: "/is-follower/:follower/:follower"
+
+Is Followed: "/is-follower/:follower/:follower"

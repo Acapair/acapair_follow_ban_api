@@ -475,3 +475,61 @@ pub async fn remove_all_banned_from(channel: Channel, db: &Surreal<Client>) -> O
     }
     search_channel_by_username(&channel.username, db).await
 }
+
+pub async fn is_follower_by_username(
+    follower: &String,
+    followed: &String,
+    db: &Surreal<Client>,
+) -> bool {
+    match search_channel_by_username(follower, db).await {
+        Some(follower_channel) => match search_channel_by_username(followed, db).await {
+            Some(mut followed_channel) => {
+                followed_channel.follower_list.sort();
+                match followed_channel
+                    .follower_list
+                    .binary_search(&follower_channel.id.unwrap().id)
+                {
+                    Ok(_) => true,
+                    Err(_) => false,
+                }
+            }
+            None => {
+                eprintln!("Error: Can't Check Is Follower | Followed Not Exists");
+                false
+            }
+        },
+        None => {
+            eprintln!("Error: Can't Check Is Follower | Follower Not Exists");
+            false
+        }
+    }
+}
+
+pub async fn is_followed_by_username(
+    follower: &String,
+    followed: &String,
+    db: &Surreal<Client>,
+) -> bool {
+    match search_channel_by_username(follower, db).await {
+        Some(mut follower_channel) => match search_channel_by_username(followed, db).await {
+            Some(followed_channel) => {
+                follower_channel.followed_list.sort();
+                match follower_channel
+                    .followed_list
+                    .binary_search(&followed_channel.id.unwrap().id)
+                {
+                    Ok(_) => true,
+                    Err(_) => false,
+                }
+            }
+            None => {
+                eprintln!("Error: Can't Check Is Follower | Followed Not Exists");
+                false
+            }
+        },
+        None => {
+            eprintln!("Error: Can't Check Is Follower | Follower Not Exists");
+            false
+        }
+    }
+}

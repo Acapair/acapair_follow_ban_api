@@ -24,6 +24,8 @@ pub async fn routing(State(state): State<AppState>) -> Router {
         .route("/unfollow/:follower/:followed", get(unfollow))
         .route("/ban/:victim/:judge", get(ban))
         .route("/unban/:victim/:judge", get(unban))
+        .route("/is-follower/:follower/:followed", get(is_follower))
+        .route("/is-followed/:follower/:followed", get(is_followed))
         .layer(CorsLayer::permissive())
         .with_state(state.clone())
 }
@@ -155,5 +157,47 @@ async fn unban(
             (StatusCode::OK, Json(unban))
         }
         None => (StatusCode::NOT_ACCEPTABLE, Json(serde_json::json!(""))),
+    }
+}
+
+async fn is_follower(
+    Path((follower, followed)): Path<(String, String)>,
+    State(state): State<AppState>,
+) -> impl IntoResponse {
+    let is_follower = db_operations::is_follower(&follower, &followed, &state.db).await;
+    match is_follower {
+        true => {
+            let is_follower = serde_json::json!({
+                "is_follower":true
+            });
+            (StatusCode::OK, Json(is_follower))
+        }
+        false => {
+            let is_follower = serde_json::json!({
+                "is_follower":false
+            });
+            (StatusCode::OK, Json(is_follower))
+        }
+    }
+}
+
+async fn is_followed(
+    Path((follower, followed)): Path<(String, String)>,
+    State(state): State<AppState>,
+) -> impl IntoResponse {
+    let is_followed: bool = db_operations::is_followed(&follower, &followed, &state.db).await;
+    match is_followed {
+        true => {
+            let is_followed = serde_json::json!({
+                "is_followed":true
+            });
+            (StatusCode::OK, Json(is_followed))
+        }
+        false => {
+            let is_followed = serde_json::json!({
+                "is_followed":false
+            });
+            (StatusCode::OK, Json(is_followed))
+        }
     }
 }

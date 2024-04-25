@@ -1,3 +1,4 @@
+
 #[cfg(test)]
 use crate::db::db_operations::*;
 use tokio::test;
@@ -6,7 +7,7 @@ use tokio::test;
 async fn create_connection_for_tests(
     db_name: &str,
 ) -> surrealdb::Surreal<surrealdb::engine::remote::ws::Client> {
-    let connection = surrealdb::Surreal::new::<surrealdb::engine::remote::ws::Ws>("127.0.0.1:8000")
+    let connection = surrealdb::Surreal::new::<surrealdb::engine::remote::ws::Ws>("127.0.0.1:5000")
         .await
         .unwrap();
     connection
@@ -441,6 +442,82 @@ async fn test_search_id_noncreated() {
     let name = &"Ahmet".to_string();
 
     assert_eq!(search_id(name, &connection).await.is_none(), true);
+
+    let _cleaning = connection.query("DELETE channel;").await;
+}
+
+#[test]
+async fn test_is_follower_already_follower() {
+    let connection = create_connection_for_tests("test_is_follower_already_follower").await;
+    let name_follower = &"Ahmet".to_string();
+    let name_followed = &"Kaan".to_string();
+
+    let _follower = create(name_follower, &connection).await.unwrap();
+    let _followed = create(name_followed, &connection).await.unwrap();
+
+    let _follower = follow(name_follower, name_followed, &connection)
+        .await
+        .unwrap();
+
+    assert_eq!(
+        is_follower(name_follower, name_followed, &connection).await,
+        true
+    );
+
+    let _cleaning = connection.query("DELETE channel;").await;
+}
+
+#[test]
+async fn test_is_follower_nonfollower() {
+    let connection = create_connection_for_tests("test_is_follower_nonfollower").await;
+    let name_follower = &"Ahmet".to_string();
+    let name_followed = &"Kaan".to_string();
+
+    let _follower = create(name_follower, &connection).await.unwrap();
+    let _followed = create(name_followed, &connection).await.unwrap();
+
+    assert_eq!(
+        is_follower(name_follower, name_followed, &connection).await,
+        false
+    );
+
+    let _cleaning = connection.query("DELETE channel;").await;
+}
+
+#[test]
+async fn test_is_followed_already_followed() {
+    let connection = create_connection_for_tests("test_is_followed_already_followed").await;
+    let name_follower = &"Ahmet".to_string();
+    let name_followed = &"Kaan".to_string();
+
+    let _follower = create(name_follower, &connection).await.unwrap();
+    let _followed = create(name_followed, &connection).await.unwrap();
+
+    let _follower = follow(name_follower, name_followed, &connection)
+        .await
+        .unwrap();
+
+    assert_eq!(
+        is_followed(name_follower, name_followed, &connection).await,
+        true
+    );
+
+    let _cleaning = connection.query("DELETE channel;").await;
+}
+
+#[test]
+async fn test_is_followed_nonfollowed() {
+    let connection = create_connection_for_tests("test_is_follower_nonfollowed").await;
+    let name_follower = &"Ahmet".to_string();
+    let name_followed = &"Kaan".to_string();
+
+    let _follower = create(name_follower, &connection).await.unwrap();
+    let _followed = create(name_followed, &connection).await.unwrap();
+
+    assert_eq!(
+        is_followed(name_follower, name_followed, &connection).await,
+        false
+    );
 
     let _cleaning = connection.query("DELETE channel;").await;
 }
