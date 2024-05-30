@@ -17,11 +17,11 @@ pub async fn database_config() -> DataBaseConfig {
         .await
         .unwrap();
 
-    let configs_parsed: Vec<&str> = config_unparsed.split_terminator("\n").collect();
+    let configs_parsed: Vec<&str> = config_unparsed.split_terminator('\n').collect();
     let mut configs_cleaned: Vec<&str> = vec![];
 
     for element in configs_parsed {
-        let dirty: Vec<&str> = element.split(": ").collect();
+        let dirty: Vec<&str> = element.split('=').collect();
         configs_cleaned.push(dirty[1]);
     }
 

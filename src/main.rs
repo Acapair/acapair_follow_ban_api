@@ -28,7 +28,7 @@ async fn main() {
     };
 
     let app = routing::routing(axum::extract::State(state)).await;
-    let addr = SocketAddr::from(take_args().parse::<SocketAddr>().unwrap());
+    let addr = take_args().parse::<SocketAddr>().unwrap();
 
     axum_server::bind_rustls(addr, tls_config)
         .serve(app.into_make_service())

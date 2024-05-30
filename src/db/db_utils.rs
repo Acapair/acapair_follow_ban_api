@@ -57,7 +57,7 @@ pub async fn search_channel_by_username(
     for element in searched {
         match element {
             Some(channel) => {
-                if channel.username == username.to_string() {
+                if channel.username == *username {
                     return Some(channel);
                 }
             }
@@ -73,7 +73,7 @@ pub async fn create_channel(username: &String, db: &Surreal<Client>) -> Vec<Opti
     match search_channel_by_username(username, db).await {
         Some(_) => {
             eprintln!("Already Exists");
-            return vec![];
+            vec![]
         }
         None => {
             db.query("DEFINE INDEX usernameINDEX ON TABLE channel COLUMNS username UNIQUE")
@@ -485,13 +485,10 @@ pub async fn is_follower_by_username(
         Some(follower_channel) => match search_channel_by_username(followed, db).await {
             Some(mut followed_channel) => {
                 followed_channel.follower_list.sort();
-                match followed_channel
+                followed_channel
                     .follower_list
                     .binary_search(&follower_channel.id.unwrap().id)
-                {
-                    Ok(_) => true,
-                    Err(_) => false,
-                }
+                    .is_ok()
             }
             None => {
                 eprintln!("Error: Can't Check Is Follower | Followed Not Exists");
@@ -510,13 +507,10 @@ pub async fn is_banned_by_username(victim: &String, judge: &String, db: &Surreal
         Some(victim_channel) => match search_channel_by_username(judge, db).await {
             Some(mut judge_channel) => {
                 judge_channel.banned_list.sort();
-                match judge_channel
+                judge_channel
                     .banned_list
                     .binary_search(&victim_channel.id.unwrap().id)
-                {
-                    Ok(_) => true,
-                    Err(_) => false,
-                }
+                    .is_ok()
             }
             None => {
                 eprintln!("Error: Can't Check Is Banned | Judge Not Exists");
