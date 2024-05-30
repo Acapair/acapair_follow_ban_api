@@ -4,26 +4,26 @@
 >: means they are variable.
 
 ## Exposed URLs
-Alive Ping: "/"
+Alive Ping(get): "/"
 
-Create User: "/create/:username"
+Create User(post): "/:username"
 
-Delete User: "/delete/:username"
+Delete User(delete): "/:username"
 
-Search User By Username: "/search-username/:username"
+Search User By Username(get): "/:username"
 
-Search User By ID: "/search-id/:id"
+Search User By ID(get): "/id/:id"
 
-Change Username: "/change-username/:username/:updated_username
+Change Username(patch): "/username/:username/:updated_username
 
-Follow User: "/follow/:follower/:followed"
+Follow User(patch): "/follow/:follower/:followed"
 
-Unfollow User: "/unfollow/:follower/:followed"
+Unfollow User(patch): "/unfollow/:follower/:followed"
 
-Ban User: "/ban/:victim/:judge"
+Ban User(patch): "/ban/:victim/:judge"
 
-Unban User: "/unban/:victim/:judge"
+Unban User(patch): "/unban/:victim/:judge"
 
-Is Follower: "/is-follower/:follower/:follower"
+Is Follower(get): "/is-follower/:follower/:follower"
 
-Is Banned: "/is-banned/:victim/:judge"
+Is Banned(get): "/is-banned/:victim/:judge"
