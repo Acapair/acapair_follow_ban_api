@@ -1,9 +1,14 @@
 [![Rust](https://github.com/Acapair/acapair_follow_ban_api/actions/workflows/rust.yml/badge.svg)](https://github.com/Acapair/acapair_follow_ban_api/actions/workflows/rust.yml)
 # Acapair Follow Ban API
 
->: means they are variable.
+Container Start Config: 
+
+>podman run --rm --net host -v ABSOLUTE_PATH_FROM_HOST:/configs:z  -v ABSOLUTE_PATH_FROM_HOST:/certificates:z localhost/acapair_follow_ban_api:latest
+
 
 ## Exposed URLs
+>: means they are variable.
+
 Alive Ping(get): "/"
 
 Create User(post): "/:username"
