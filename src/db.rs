@@ -30,12 +30,15 @@ pub async fn establish_connection() -> Surreal<Client> {
     db
 }
 
-pub async fn search_channel_by_username(username: &String, db: &Surreal<Client>) -> Option<Channel> {
+pub async fn search_channel_by_username(
+    username: &String,
+    db: &Surreal<Client>,
+) -> Option<Channel> {
     let searched: Option<Channel> = db.select(("channel", username)).await.unwrap();
     searched
 }
 async fn search_channel_by_id(id: &Id, db: &Surreal<Client>) -> Option<Channel> {
-    let searced:Option<Channel> = db.select(("channel", id.clone())).await.unwrap();
+    let searced: Option<Channel> = db.select(("channel", id.clone())).await.unwrap();
     searced
 }
 
@@ -66,20 +69,19 @@ pub async fn create_channel(username: &String, db: &Surreal<Client>) -> Option<V
 pub async fn delete_channel(username: &String, db: &Surreal<Client>) -> Option<Channel> {
     match search_channel_by_username(username, db).await {
         Some(channel) => {
-            let deleted:Result<Option<Channel>, surrealdb::Error> = db.delete(("channel", channel.username)).await;
+            let deleted: Result<Option<Channel>, surrealdb::Error> =
+                db.delete(("channel", channel.username)).await;
             match deleted {
-                Ok(channel) => {
-                    match channel {
-                        Some(channel) => {
-                            remove_follower_artifacts(channel.clone(), db).await;
-                            remove_banned_artifacts(channel, db).await
-                        }
-                        None => {
-                            eprintln!("Error: Channel Not Exists");
-                            None
-                        }
+                Ok(channel) => match channel {
+                    Some(channel) => {
+                        remove_follower_artifacts(channel.clone(), db).await;
+                        remove_banned_artifacts(channel, db).await
                     }
-                }
+                    None => {
+                        eprintln!("Error: Channel Not Exists");
+                        None
+                    }
+                },
                 Err(err_val) => {
                     eprintln!("Error: Delete | {}", err_val);
                     None
@@ -118,7 +120,7 @@ async fn update_channel(channel: Channel, db: &Surreal<Client>) -> Option<Channe
         }
     }
 }
-async fn add_id_to_vector(id:Id, mut data:Vec<Id>) -> Option<Vec<Id>> {
+async fn add_id_to_vector(id: Id, mut data: Vec<Id>) -> Option<Vec<Id>> {
     data.sort();
     match data.binary_search(&id) {
         Ok(_) => {
@@ -131,7 +133,7 @@ async fn add_id_to_vector(id:Id, mut data:Vec<Id>) -> Option<Vec<Id>> {
         }
     }
 }
-async fn remove_id_from_vector(id:Id, mut data:Vec<Id>) -> Option<Vec<Id>> {
+async fn remove_id_from_vector(id: Id, mut data: Vec<Id>) -> Option<Vec<Id>> {
     data.sort();
     match data.binary_search(&id) {
         Ok(_) => {
@@ -149,8 +151,8 @@ async fn remove_follower_artifacts(mut channel: Channel, db: &Surreal<Client>) -
         match search_channel_by_id(&id, db).await {
             Some(follower_channel) => {
                 match remove_id_from_vector(id.clone(), follower_channel.followed_list).await {
-                    Some(_) => {},
-                    None => {},
+                    Some(_) => {}
+                    None => {}
                 }
             }
             None => {
@@ -166,8 +168,8 @@ async fn remove_banned_artifacts(mut channel: Channel, db: &Surreal<Client>) -> 
         match search_channel_by_id(&id, db).await {
             Some(banned_channel) => {
                 match remove_id_from_vector(id.clone(), banned_channel.banned_from_list).await {
-                    Some(_) => {},
-                    None => {},
+                    Some(_) => {}
+                    None => {}
                 }
             }
             None => {
@@ -202,18 +204,16 @@ pub async fn add_follower(
 ) -> Option<Channel> {
     match search_channel_by_username(username, db).await {
         Some(mut channel) => match search_channel_by_username(follower, db).await {
-            Some(follower) => {
-                match add_id_to_vector(follower.id, channel.follower_list).await {
-                    Some(follower_list) => {
-                        channel.follower_list = follower_list;
-                        update_channel(channel, db).await
-                    }
-                    None => {
-                        eprintln!("Error: Add Follower Id");
-                        None
-                    }
+            Some(follower) => match add_id_to_vector(follower.id, channel.follower_list).await {
+                Some(follower_list) => {
+                    channel.follower_list = follower_list;
+                    update_channel(channel, db).await
                 }
-            }
+                None => {
+                    eprintln!("Error: Add Follower Id");
+                    None
+                }
+            },
             None => {
                 eprintln!("Error: Follower Not Exists");
                 None
@@ -255,21 +255,23 @@ pub async fn remove_follower(
         }
     }
 }
-pub async fn add_banned(banned: &String, username: &String, db: &Surreal<Client>) -> Option<Channel> {
+pub async fn add_banned(
+    banned: &String,
+    username: &String,
+    db: &Surreal<Client>,
+) -> Option<Channel> {
     match search_channel_by_username(username, db).await {
         Some(mut channel) => match search_channel_by_username(banned, db).await {
-            Some(banned) => {
-                match add_id_to_vector(banned.id, channel.banned_list).await {
-                    Some(banned_list) => {
-                        channel.banned_list = banned_list;
-                        update_channel(channel, db).await
-                    }
-                    None => {
-                        eprintln!("Error: Add Banned Id");
-                        None
-                    }
+            Some(banned) => match add_id_to_vector(banned.id, channel.banned_list).await {
+                Some(banned_list) => {
+                    channel.banned_list = banned_list;
+                    update_channel(channel, db).await
                 }
-            }
+                None => {
+                    eprintln!("Error: Add Banned Id");
+                    None
+                }
+            },
             None => {
                 eprintln!("Error: Banned Not Exists");
                 None
@@ -287,138 +289,140 @@ pub async fn remove_banned(
     db: &Surreal<Client>,
 ) -> Option<Channel> {
     match search_channel_by_username(username, db).await {
-        Some(mut channel) => {
-            match search_channel_by_username(banned, db).await {
-                Some(banned) => {
-                    match remove_id_from_vector(banned.id, channel.banned_list).await {
-                        Some(banned_list) => {
-                            channel.banned_list = banned_list;
-                            update_channel(channel, db).await
-                        }
-                        None => {
-                            eprintln!("Error: Remove Banned Id");
-                            None
-                        }
-                    }
+        Some(mut channel) => match search_channel_by_username(banned, db).await {
+            Some(banned) => match remove_id_from_vector(banned.id, channel.banned_list).await {
+                Some(banned_list) => {
+                    channel.banned_list = banned_list;
+                    update_channel(channel, db).await
                 }
                 None => {
-                    eprintln!("Error: Banned Not Exists");
+                    eprintln!("Error: Remove Banned Id");
                     None
                 }
+            },
+            None => {
+                eprintln!("Error: Banned Not Exists");
+                None
             }
-        }
+        },
         None => {
             eprintln!("Error: Remove Banned");
             None
         }
     }
 }
-pub async fn add_followed(followed:&String, username: &String, db: &Surreal<Client>) -> Option<Channel> {
+pub async fn add_followed(
+    followed: &String,
+    username: &String,
+    db: &Surreal<Client>,
+) -> Option<Channel> {
     match search_channel_by_username(username, db).await {
-        Some(mut channel) => {
-            match search_channel_by_username(followed, db).await {
-                Some(followed) => {
-                    match add_id_to_vector(followed.id, channel.followed_list).await {
-                        Some(followed_list) => {
-                            channel.followed_list = followed_list;
-                            update_channel(channel, db).await
-                        }
-                        None => {
-                            eprintln!("Error: Add Followed Id");
-                            None
-                        }
-                    }
+        Some(mut channel) => match search_channel_by_username(followed, db).await {
+            Some(followed) => match add_id_to_vector(followed.id, channel.followed_list).await {
+                Some(followed_list) => {
+                    channel.followed_list = followed_list;
+                    update_channel(channel, db).await
                 }
                 None => {
-                    eprintln!("Error: Followed Not Exists");
+                    eprintln!("Error: Add Followed Id");
                     None
                 }
+            },
+            None => {
+                eprintln!("Error: Followed Not Exists");
+                None
             }
-        }
+        },
         None => {
             eprintln!("Error: Add Followed");
             None
         }
     }
 }
-pub async fn remove_followed(followed:&String, username: &String, db: &Surreal<Client>) -> Option<Channel> {
+pub async fn remove_followed(
+    followed: &String,
+    username: &String,
+    db: &Surreal<Client>,
+) -> Option<Channel> {
     match search_channel_by_username(username, db).await {
-        Some(mut channel) => {
-            match search_channel_by_username(followed, db).await {
-                Some(followed) => {
-                    match remove_id_from_vector(followed.id, channel.followed_list).await {
-                        Some(followed_list) => {
-                            channel.followed_list = followed_list;
-                            update_channel(channel, db).await
-                        }
-                        None => {
-                            eprintln!("Error: Remove Followed Id");
-                            None
-                        }
+        Some(mut channel) => match search_channel_by_username(followed, db).await {
+            Some(followed) => {
+                match remove_id_from_vector(followed.id, channel.followed_list).await {
+                    Some(followed_list) => {
+                        channel.followed_list = followed_list;
+                        update_channel(channel, db).await
+                    }
+                    None => {
+                        eprintln!("Error: Remove Followed Id");
+                        None
                     }
                 }
-                None => {
-                    eprintln!("Error: Followed Not Exists");
-                    None
-                }
             }
-        }
+            None => {
+                eprintln!("Error: Followed Not Exists");
+                None
+            }
+        },
         None => {
             eprintln!("Error: Remove Followed");
             None
         }
     }
 }
-pub async fn add_banned_from(banned_from: &String, username: &String, db: &Surreal<Client>) -> Option<Channel> {
+pub async fn add_banned_from(
+    banned_from: &String,
+    username: &String,
+    db: &Surreal<Client>,
+) -> Option<Channel> {
     match search_channel_by_username(username, db).await {
-        Some(mut channel) => {
-            match search_channel_by_username(banned_from, db).await {
-                Some(banned_from) => {
-                    match add_id_to_vector(banned_from.id, channel.banned_from_list).await {
-                        Some(banned_from_list) => {
-                            channel.banned_from_list = banned_from_list;
-                            update_channel(channel, db).await
-                        }
-                        None => {
-                            eprintln!("Error: Add Banned from Id");
-                            None
-                        }
+        Some(mut channel) => match search_channel_by_username(banned_from, db).await {
+            Some(banned_from) => {
+                match add_id_to_vector(banned_from.id, channel.banned_from_list).await {
+                    Some(banned_from_list) => {
+                        channel.banned_from_list = banned_from_list;
+                        update_channel(channel, db).await
+                    }
+                    None => {
+                        eprintln!("Error: Add Banned from Id");
+                        None
                     }
                 }
-                None => {
-                    eprintln!("Error: Followed Not Exists");
-                    None
-                }
             }
-        }
+            None => {
+                eprintln!("Error: Followed Not Exists");
+                None
+            }
+        },
         None => {
             eprintln!("Error: Add Banned From");
             None
         }
     }
 }
-pub async fn remove_banned_from(banned_from: &String, username: &String, db: &Surreal<Client>) -> Option<Channel> {
+pub async fn remove_banned_from(
+    banned_from: &String,
+    username: &String,
+    db: &Surreal<Client>,
+) -> Option<Channel> {
     match search_channel_by_username(username, db).await {
-        Some(mut channel) => {
-            match search_channel_by_username(banned_from, db).await {
-                Some(banned_from) => {
-                    match remove_id_from_vector(banned_from.id, channel.banned_from_list).await {
-                        Some(banned_from_list) => {
-                            channel.banned_from_list = banned_from_list;
-                            update_channel(channel, db).await
-                        }
-                        None => {
-                            eprintln!("Error: Remove Banned from Id");
-                            None
-                        }
+        Some(mut channel) => match search_channel_by_username(banned_from, db).await {
+            Some(banned_from) => {
+                match remove_id_from_vector(banned_from.id, channel.banned_from_list).await {
+                    Some(banned_from_list) => {
+                        channel.banned_from_list = banned_from_list;
+                        update_channel(channel, db).await
+                    }
+                    None => {
+                        eprintln!("Error: Remove Banned from Id");
+                        None
                     }
                 }
-                None => {
-                    eprintln!("Error: Banned Not Exists");
-                    None
-                }
             }
-        }
+            None => {
+                eprintln!("Error: Banned Not Exists");
+                None
+            }
+        },
         None => {
             eprintln!("Error: Remove Banned From");
             None
