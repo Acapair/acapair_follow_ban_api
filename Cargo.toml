@@ -1,5 +1,5 @@
 [package]
-name = "acapair_chat_api"
+name = "acapair_follow_ban_api"
 version = "0.1.0"
 edition = "2021"
 
