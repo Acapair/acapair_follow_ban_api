@@ -1,7 +1,6 @@
-use std::{env, net::SocketAddr};
-
-use acapair_chat_api::{routing, AppState};
+use acapair_follow_ban_api::{routing, AppState};
 use axum_server::tls_rustls::RustlsConfig;
+use std::{env, net::SocketAddr};
 
 fn take_args() -> String {
     let mut bind_address: String = String::new();
@@ -15,7 +14,6 @@ fn take_args() -> String {
 #[tokio::main]
 async fn main() {
     println!("Hello, world!");
-
     let config =
         RustlsConfig::from_pem_file("certificates/fullchain.pem", "certificates/privkey.pem")
             .await
