@@ -31,8 +31,9 @@ async fn test_create() {
     let name = &"Ahmet".to_string();
     let created = create(name, &connection).await;
 
-    let _cleaning = connection.query("DELETE channel;").await;
     assert_eq!(created.is_some(), true);
+
+    let _cleaning = connection.query("DELETE channel;").await;
 }
 
 #[test]
@@ -43,8 +44,9 @@ async fn test_search() {
     let created = create(name, &connection).await;
     let searched = search(name, &connection).await;
 
-    let _cleaning = connection.query("DELETE channel;").await;
     assert_eq!(created, searched);
+
+    let _cleaning = connection.query("DELETE channel;").await;
 }
 
 #[test]
@@ -55,8 +57,10 @@ async fn test_delete() {
     let created = create(name, &connection).await;
     let deleted = delete(name, &connection).await;
 
-    let _cleaning = connection.query("DELETE channel;").await;
     assert_eq!(created, deleted);
+    assert_eq!(search(name, &connection).await.is_none(), true);
+
+    let _cleaning = connection.query("DELETE channel;").await;
 }
 
 #[test]
@@ -69,9 +73,10 @@ async fn test_change_username() {
         .await
         .unwrap();
 
-    let _cleaning = connection.query("DELETE channel;").await;
     assert_eq!(created.id, changed.clone().id);
     assert_eq!(changed.username, "Kaan");
+
+    let _cleaning = connection.query("DELETE channel;").await;
 }
 
 #[test]
@@ -88,7 +93,6 @@ async fn test_follow() {
         .unwrap();
     let mut followed = search(name_followed, &connection).await.unwrap();
 
-    let _cleaning = connection.query("DELETE channel;").await;
     assert_eq!(
         followed.follower_list.pop().unwrap(),
         follower.id.unwrap().id
@@ -97,6 +101,8 @@ async fn test_follow() {
         follower.followed_list.pop().unwrap(),
         followed.id.unwrap().id
     );
+
+    let _cleaning = connection.query("DELETE channel;").await;
 }
 
 #[test]
@@ -127,9 +133,10 @@ async fn test_unfollow() {
         .unwrap();
     followed = search(name_followed, &connection).await.unwrap();
 
-    let _cleaning = connection.query("DELETE channel;").await;
     assert_eq!(followed.follower_list.pop().is_none(), true);
     assert_eq!(follower.followed_list.pop().is_none(), true);
+
+    let _cleaning = connection.query("DELETE channel;").await;
 }
 
 #[test]
@@ -144,9 +151,10 @@ async fn test_ban() {
     let mut victim = ban(name_victim, name_judge, &connection).await.unwrap();
     let mut judge = search(name_judge, &connection).await.unwrap();
 
-    let _cleaning = connection.query("DELETE channel;").await;
     assert_eq!(victim.banned_from_list.pop().unwrap(), judge.id.unwrap().id);
     assert_eq!(judge.banned_list.pop().unwrap(), victim.id.unwrap().id);
+
+    let _cleaning = connection.query("DELETE channel;").await;
 }
 
 #[test]
@@ -167,9 +175,10 @@ async fn test_unban() {
     victim = unban(name_victim, name_judge, &connection).await.unwrap();
     judge = search(name_judge, &connection).await.unwrap();
 
-    let _cleaning = connection.query("DELETE channel;").await;
     assert_eq!(victim.banned_from_list.pop().is_none(), true);
     assert_eq!(judge.banned_list.pop().is_none(), true);
+
+    let _cleaning = connection.query("DELETE channel;").await;
 }
 
 #[test]
@@ -198,9 +207,10 @@ async fn test_delete_follower() {
     follower = delete(name_follower, &connection).await.unwrap();
     followed = search(name_followed, &connection).await.unwrap();
 
-    let _cleaning = connection.query("DELETE channel;").await;
     assert_eq!(followed.follower_list.pop().is_none(), true);
     assert_eq!(follower.followed_list.pop().is_none(), true);
+
+    let _cleaning = connection.query("DELETE channel;").await;
 }
 
 #[test]
@@ -229,9 +239,10 @@ async fn test_delete_followed() {
     followed = delete(name_followed, &connection).await.unwrap();
     follower = search(name_follower, &connection).await.unwrap();
 
-    let _cleaning = connection.query("DELETE channel;").await;
     assert_eq!(followed.follower_list.pop().is_none(), true);
     assert_eq!(follower.followed_list.pop().is_none(), true);
+
+    let _cleaning = connection.query("DELETE channel;").await;
 }
 
 #[test]
@@ -243,26 +254,19 @@ async fn test_delete_victim() {
     let _victim = create(name_victim, &connection).await.unwrap();
     let _judge = create(name_judge, &connection).await.unwrap();
 
-    let mut victim = ban(name_victim, name_judge, &connection)
-        .await
-        .unwrap();
+    let mut victim = ban(name_victim, name_judge, &connection).await.unwrap();
     let mut judge = search(name_judge, &connection).await.unwrap();
 
-    assert_eq!(
-        judge.banned_list.pop().unwrap(),
-        victim.id.unwrap().id
-    );
-    assert_eq!(
-        victim.banned_from_list.pop().unwrap(),
-        judge.id.unwrap().id
-    );
+    assert_eq!(judge.banned_list.pop().unwrap(), victim.id.unwrap().id);
+    assert_eq!(victim.banned_from_list.pop().unwrap(), judge.id.unwrap().id);
 
     victim = delete(name_victim, &connection).await.unwrap();
     judge = search(name_judge, &connection).await.unwrap();
 
-    let _cleaning = connection.query("DELETE channel;").await;
     assert_eq!(judge.banned_list.pop().is_none(), true);
     assert_eq!(victim.banned_from_list.pop().is_none(), true);
+
+    let _cleaning = connection.query("DELETE channel;").await;
 }
 
 #[test]
@@ -274,24 +278,138 @@ async fn test_delete_judge() {
     let _victim = create(name_victim, &connection).await.unwrap();
     let _judge = create(name_judge, &connection).await.unwrap();
 
-    let mut victim = ban(name_victim, name_judge, &connection)
-        .await
-        .unwrap();
+    let mut victim = ban(name_victim, name_judge, &connection).await.unwrap();
     let mut judge = search(name_judge, &connection).await.unwrap();
 
-    assert_eq!(
-        judge.banned_list.pop().unwrap(),
-        victim.id.unwrap().id
-    );
-    assert_eq!(
-        victim.banned_from_list.pop().unwrap(),
-        judge.id.unwrap().id
-    );
+    assert_eq!(judge.banned_list.pop().unwrap(), victim.id.unwrap().id);
+    assert_eq!(victim.banned_from_list.pop().unwrap(), judge.id.unwrap().id);
 
     judge = delete(name_judge, &connection).await.unwrap();
     victim = search(name_victim, &connection).await.unwrap();
 
-    let _cleaning = connection.query("DELETE channel;").await;
     assert_eq!(judge.banned_list.pop().is_none(), true);
     assert_eq!(victim.banned_from_list.pop().is_none(), true);
+
+    let _cleaning = connection.query("DELETE channel;").await;
+}
+
+#[test]
+async fn test_follow_already_follower() {
+    let connection = create_connection_for_tests("test_follow_already_follower").await;
+    let name_follower = &"Ahmet".to_string();
+    let name_followed = &"Kaan".to_string();
+
+    let _follower = create(name_follower, &connection).await.unwrap();
+    let _followed = create(name_followed, &connection).await.unwrap();
+
+    let mut follower = follow(name_follower, name_followed, &connection)
+        .await
+        .unwrap();
+    let mut followed = search(name_followed, &connection).await.unwrap();
+
+    assert_eq!(
+        followed.follower_list.pop().unwrap(),
+        follower.id.unwrap().id
+    );
+    assert_eq!(
+        follower.followed_list.pop().unwrap(),
+        followed.id.unwrap().id
+    );
+    assert_eq!(
+        follow(name_follower, name_followed, &connection)
+            .await
+            .is_none(),
+        true
+    );
+    let _cleaning = connection.query("DELETE channel;").await;
+}
+
+#[test]
+async fn test_unfollow_already_nonfollower() {
+    let connection = create_connection_for_tests("test_unfollow_already_nonfollower").await;
+    let name_follower = &"Ahmet".to_string();
+    let name_followed = &"Kaan".to_string();
+
+    let _follower = create(name_follower, &connection).await.unwrap();
+    let _followed = create(name_followed, &connection).await.unwrap();
+
+    assert_eq!(
+        unfollow(name_follower, name_followed, &connection)
+            .await
+            .is_none(),
+        true
+    );
+    let _cleaning = connection.query("DELETE channel;").await;
+}
+
+#[test]
+async fn test_ban_already_banned() {
+    let connection = create_connection_for_tests("test_ban_already_banned").await;
+    let name_victim = &"Ahmet".to_string();
+    let name_judge = &"Kaan".to_string();
+
+    let _victim = create(name_victim, &connection).await.unwrap();
+    let _judge = create(name_judge, &connection).await.unwrap();
+
+    let mut victim = ban(name_victim, name_judge, &connection).await.unwrap();
+    let mut judge = search(name_judge, &connection).await.unwrap();
+
+    assert_eq!(victim.banned_from_list.pop().unwrap(), judge.id.unwrap().id);
+    assert_eq!(judge.banned_list.pop().unwrap(), victim.id.unwrap().id);
+    assert_eq!(
+        ban(name_victim, name_judge, &connection).await.is_none(),
+        true
+    );
+
+    let _cleaning = connection.query("DELETE channel;").await;
+}
+
+#[test]
+async fn test_unban_already_nonbanned() {
+    let connection = create_connection_for_tests("test_unban_already_nonbanned").await;
+    let name_victim = &"Ahmet".to_string();
+    let name_judge = &"Kaan".to_string();
+
+    let _victim = create(name_victim, &connection).await.unwrap();
+    let _judge = create(name_judge, &connection).await.unwrap();
+
+    assert_eq!(
+        unban(name_victim, name_judge, &connection).await.is_none(),
+        true
+    );
+
+    let _cleaning = connection.query("DELETE channel;").await;
+}
+
+#[test]
+async fn test_delete_noncreated() {
+    let connection = create_connection_for_tests("test_delete_noncreated").await;
+    let name = &"Ahmet".to_string();
+
+    assert_eq!(delete(name, &connection).await.is_none(), true);
+
+    let _cleaning = connection.query("DELETE channel;").await;
+}
+
+#[test]
+async fn test_create_already_created() {
+    let connection = create_connection_for_tests("test_create_already_created").await;
+
+    let name = &"Ahmet".to_string();
+    let created = create(name, &connection).await;
+
+    assert_eq!(created.is_some(), true);
+    assert_eq!(create(name, &connection).await.is_none(), true);
+
+    let _cleaning = connection.query("DELETE channel;").await;
+}
+
+#[test]
+async fn test_search_noncreated() {
+    let connection = create_connection_for_tests("test_search_noncreated").await;
+    let name = &"Ahmet".to_string();
+
+    assert_eq!(search(name, &connection).await.is_none(), true);
+
+    let _cleaning = connection.query("DELETE channel;").await;
 }

@@ -9,7 +9,10 @@ pub async fn connect() -> Option<Surreal<Client>> {
 }
 
 pub async fn create(username: &String, db: &Surreal<Client>) -> Option<Channel> {
-    create_channel(username, db).await.pop().unwrap()
+    match create_channel(username, db).await.pop() {
+        Some(channel) => channel,
+        None => None,
+    }
 }
 
 pub async fn search(username: &String, db: &Surreal<Client>) -> Option<Channel> {
