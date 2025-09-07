@@ -1,0 +1,5 @@
+address=0.0.0.0:5000
+username=root
+password=root
+namespace=acapair
+database=acapair

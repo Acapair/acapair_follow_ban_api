@@ -2,7 +2,7 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
     response::IntoResponse,
-    routing::get,
+    routing::{delete, get, patch, post},
     Json, Router,
 };
 use tower_http::cors::CorsLayer;
@@ -12,18 +12,18 @@ use crate::{db::db_operations, utils::database_config, AppState};
 pub async fn routing(State(state): State<AppState>) -> Router {
     Router::new()
         .route("/", get(alive))
-        .route("/create/:username", get(create))
-        .route("/delete/:username", get(delete))
-        .route("/search-username/:username", get(search_username))
-        .route("/search-id/:id", get(search_id))
+        .route("/:username", post(create_channel))
+        .route("/:username", delete(delete_channel))
+        .route("/:username", get(search_username))
+        .route("/id/:id", get(search_id))
         .route(
-            "/change-username/:username/:updated_username",
-            get(change_username),
+            "/username/:username/:updated_username",
+            patch(change_username),
         )
-        .route("/follow/:follower/:followed", get(follow))
-        .route("/unfollow/:follower/:followed", get(unfollow))
-        .route("/ban/:victim/:judge", get(ban))
-        .route("/unban/:victim/:judge", get(unban))
+        .route("/follow/:follower/:followed", patch(follow))
+        .route("/unfollow/:follower/:followed", patch(unfollow))
+        .route("/ban/:victim/:judge", patch(ban))
+        .route("/unban/:victim/:judge", patch(unban))
         .route("/is-follower/:follower/:followed", get(is_follower))
         .route("/is-banned/:victim/:judge", get(is_banned))
         .layer(CorsLayer::permissive())
@@ -42,7 +42,10 @@ async fn alive() -> impl IntoResponse {
     (StatusCode::OK, Json(alive_json))
 }
 
-async fn create(Path(username): Path<String>, State(state): State<AppState>) -> impl IntoResponse {
+async fn create_channel(
+    Path(username): Path<String>,
+    State(state): State<AppState>,
+) -> impl IntoResponse {
     match db_operations::create(&username, &state.db).await {
         Some(channel) => {
             let create = serde_json::json!({
@@ -53,7 +56,10 @@ async fn create(Path(username): Path<String>, State(state): State<AppState>) -> 
         None => (StatusCode::NOT_ACCEPTABLE, Json(serde_json::json!(""))),
     }
 }
-async fn delete(Path(username): Path<String>, State(state): State<AppState>) -> impl IntoResponse {
+async fn delete_channel(
+    Path(username): Path<String>,
+    State(state): State<AppState>,
+) -> impl IntoResponse {
     match db_operations::delete(&username, &state.db).await {
         Some(channel) => {
             let delete = serde_json::json!({
