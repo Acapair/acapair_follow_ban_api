@@ -1,3 +1,5 @@
+use std::net::IpAddr;
+
 use serde::{Deserialize, Serialize};
 use surrealdb::{
     engine::remote::ws::Client,
@@ -17,6 +19,12 @@ pub struct DataBaseConfig {
     pub password: String,
     pub namespace: String,
     pub database: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct ServerConfig {
+    pub ip_address: IpAddr,
+    pub port: u16,
 }
 
 #[derive(Debug, Clone)]

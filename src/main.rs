@@ -1,26 +1,17 @@
 use acapair_follow_ban_api::{
     db::db_operations::connect,
     routing,
-    utils::{database_config, tls_config},
+    utils::{database_config, server_config, tls_config},
     AppState,
 };
-use std::{env, net::SocketAddr};
-
-fn take_args() -> String {
-    let mut bind_address: String = String::new();
-    for element in env::args() {
-        bind_address = element;
-    }
-    println!("\n\n\tOn Air -> https://{}\n\n", bind_address);
-    bind_address
-}
+use std::net::SocketAddr;
 
 #[tokio::main]
 async fn main() {
     println!("Hello, world!");
     let tls_config = tls_config().await;
     let database_config = database_config().await;
-
+    let server_config = server_config().await;
     println!("{:#?}", database_config);
 
     let state = AppState {
@@ -28,8 +19,11 @@ async fn main() {
     };
 
     let app = routing::routing(axum::extract::State(state)).await;
-    let addr = take_args().parse::<SocketAddr>().unwrap();
-
+    let addr = SocketAddr::new(server_config.ip_address, server_config.port);
+    println!(
+        "\n\n\tOn Air -> https://{}\n\n",
+        format!("{}:{}", server_config.ip_address, server_config.port)
+    );
     axum_server::bind_rustls(addr, tls_config)
         .serve(app.into_make_service())
         .await
