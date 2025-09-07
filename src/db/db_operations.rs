@@ -100,3 +100,11 @@ pub async fn unban(victim: &String, judge: &String, db: &Surreal<Client>) -> Opt
         None => None,
     }
 }
+
+pub async fn is_follower(follower: &String, followed: &String, db: &Surreal<Client>) -> bool {
+    is_follower_by_username(follower, followed, db).await
+}
+
+pub async fn is_followed(follower: &String, followed: &String, db: &Surreal<Client>) -> bool {
+    is_followed_by_username(follower, followed, db).await
+}

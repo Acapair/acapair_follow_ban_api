@@ -24,7 +24,7 @@ pub async fn database_config() -> DataBaseConfig {
         let dirty: Vec<&str> = element.split(": ").collect();
         configs_cleaned.push(dirty[1]);
     }
-    
+
     DataBaseConfig {
         address: configs_cleaned[0].to_string(),
         username: configs_cleaned[1].to_string(),
