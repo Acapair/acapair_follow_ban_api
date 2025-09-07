@@ -505,30 +505,26 @@ pub async fn is_follower_by_username(
     }
 }
 
-pub async fn is_followed_by_username(
-    follower: &String,
-    followed: &String,
-    db: &Surreal<Client>,
-) -> bool {
-    match search_channel_by_username(follower, db).await {
-        Some(mut follower_channel) => match search_channel_by_username(followed, db).await {
-            Some(followed_channel) => {
-                follower_channel.followed_list.sort();
-                match follower_channel
-                    .followed_list
-                    .binary_search(&followed_channel.id.unwrap().id)
+pub async fn is_banned_by_username(victim: &String, judge: &String, db: &Surreal<Client>) -> bool {
+    match search_channel_by_username(victim, db).await {
+        Some(victim_channel) => match search_channel_by_username(judge, db).await {
+            Some(mut judge_channel) => {
+                judge_channel.banned_list.sort();
+                match judge_channel
+                    .banned_list
+                    .binary_search(&victim_channel.id.unwrap().id)
                 {
                     Ok(_) => true,
                     Err(_) => false,
                 }
             }
             None => {
-                eprintln!("Error: Can't Check Is Follower | Followed Not Exists");
+                eprintln!("Error: Can't Check Is Banned | Judge Not Exists");
                 false
             }
         },
         None => {
-            eprintln!("Error: Can't Check Is Follower | Follower Not Exists");
+            eprintln!("Error: Can't Check Is Banned | Victim Not Exists");
             false
         }
     }
