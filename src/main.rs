@@ -1,5 +1,9 @@
-use acapair_follow_ban_api::{routing, AppState};
-use axum_server::tls_rustls::RustlsConfig;
+use acapair_follow_ban_api::{
+    db::db_operations::connect,
+    routing,
+    utils::{database_config, tls_config},
+    AppState,
+};
 use std::{env, net::SocketAddr};
 
 fn take_args() -> String {
@@ -14,17 +18,19 @@ fn take_args() -> String {
 #[tokio::main]
 async fn main() {
     println!("Hello, world!");
-    let config =
-        RustlsConfig::from_pem_file("certificates/fullchain.pem", "certificates/privkey.pem")
-            .await
-            .unwrap();
+    let tls_config = tls_config().await;
+    let database_config = database_config().await;
 
-    let state = AppState {};
+    println!("{:#?}", database_config);
+
+    let state = AppState {
+        db: connect(&database_config).await.unwrap(),
+    };
 
     let app = routing::routing(axum::extract::State(state)).await;
     let addr = SocketAddr::from(take_args().parse::<SocketAddr>().unwrap());
 
-    axum_server::bind_rustls(addr, config)
+    axum_server::bind_rustls(addr, tls_config)
         .serve(app.into_make_service())
         .await
         .unwrap();
